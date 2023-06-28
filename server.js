@@ -1,24 +1,36 @@
 const express = require('express')
 const mysql = require('mysql')
-const cookieParser = require('cookie-parser')
-const bcrypt = require('bcrypt')
 const cors = require('cors')
+const bcrypt = require('bcrypt')
+const cookieParser = require('cookie-parser')
+const bodyParser = require('body-parser')
+const session = require('express-session')
 const jwt = require('jsonwebtoken')
+const salt = 10;
 
 const app = express()
 app.use(cors(
     {
         origin: ['http://localhost:3000'],
-        methods: ['POST', 'GET', 'PUT', 'DELETE'],
+        methods: ["POST", "GET", "PUT", "DELETE"],
         credentials: true
     }
 ))
 // app.use(cors())
 app.use(cookieParser())
 app.use(express.json())
+app.use(bodyParser.urlencoded({extended: false}))
+app.use(bodyParser.json())
 // app.use(express.static('public'))
-
-
+app.use(session({
+    secret: 'secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false,
+        maxAge: 1000 * 60 * 60 * 24
+    }
+}))
 
 const con = mysql.createConnection({
     host: 'localhost',
@@ -58,7 +70,7 @@ app.delete('/delete/:id', (req, res) => {
 
 app.post('/create', (req,res) => {
     const sql = 'INSERT INTO users (`name`,`email`,`password`) VALUES (?) ';
-    bcrypt.hash(req.body.password.toString(), 10, (err, hash) => {
+    bcrypt.hash(req.body.password.toString(), salt , (err, hash) => {
         if (err) return res.json({ Error: 'Error in hashing password'})
         const values = [
             req.body.name,
@@ -72,9 +84,18 @@ app.post('/create', (req,res) => {
     })
 })
 
+app.get('/', (req,res) => {
+    if(req.session.username) {
+        return res.json({valid: true, username: req.session.username})
+    } else {
+        return res.json({valid: false})
+    }
+})
+
 app.post('/signup', (req,res) => {
     const sql = 'INSERT INTO users (`name`,`email`,`password`) VALUES (?) ';
-    bcrypt.hash(req.body.password.toString(), 10, (err, hash) => {
+    const password = req.body.password;
+    bcrypt.hash(password.toString(), salt , (err, hash) => {
         if (err) return res.json({ Error: 'Error in hashing password'})
         const values = [
             req.body.name,
@@ -83,20 +104,25 @@ app.post('/signup', (req,res) => {
         ]
         con.query(sql, [values], (err, result) => {
             if (err) return res.json({ Error: 'Inside singup query' })
-            return res.json({ Status: 'Success' })
+            return res.json({ Status: 'Success', result })
         })
     })
 })
 
 app.post('/login', (req,res) => {
-    const sql = 'SELECT * FROM users WHERE email = ? AND password = ?';
-    con.query(sql, [req.body.email, req.body.password,], (err, result) => {
+    const sql = 'SELECT * FROM users where `email` = ?';
+    con.query(sql, [req.body.email], (err, result) => {
         if(err) return res.json({Status: 'Error', Error: 'Error in running query'})
         if(result.length > 0) {
             bcrypt.compare(req.body.password.toString(), result[0].password, (err, response) => {
                 if (err) return res.json({ Error: "password error" });
+                if (response) {
+                    return res.json({Status: 'Success'})
+                } else {           
+                    return res.json({Error: 'Password not matched'})
+                }
             })
-            return res.json({Status: 'Success'})
+            // return res.json({Status: 'Success'})
         } else {
             return res.json({Status: 'Error', Error: 'Wrong Email or Password!!'})
         }

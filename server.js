@@ -48,6 +48,7 @@ con.connect(function (err) {
 })
 
 app.get('/logout', (req,res) => {
+    req.session.destroy();
     return res.json({Status: 'Success'})
 })
 
@@ -85,46 +86,36 @@ app.post('/create', (req,res) => {
 })
 
 app.get('/', (req,res) => {
-    if(req.session.username) {
-        return res.json({valid: true, username: req.session.username})
+    if(req.session.role) {
+        return res.json({valid: true, role: req.session.role})
     } else {
         return res.json({valid: false})
     }
 })
 
 app.post('/signup', (req,res) => {
-    const sql = 'INSERT INTO users (`name`,`email`,`password`) VALUES (?) ';
-    const password = req.body.password;
-    bcrypt.hash(password.toString(), salt , (err, hash) => {
-        if (err) return res.json({ Error: 'Error in hashing password'})
+    const sql = 'INSERT INTO users (`name`,`email`,`phone`,`password`) VALUES (?) ';
         const values = [
             req.body.name,
             req.body.email,
-            hash
+            req.body.phone,
+            req.body.password
         ]
         con.query(sql, [values], (err, result) => {
             if (err) return res.json({ Error: 'Inside singup query' })
             return res.json({ Status: 'Success', result })
         })
-    })
 })
 
 app.post('/login', (req,res) => {
-    const sql = 'SELECT * FROM users where `email` = ?';
-    con.query(sql, [req.body.email], (err, result) => {
+    const sql = 'SELECT * FROM users where email = ? and password = ?';
+    con.query(sql, [req.body.email, req.body.password], (err, result) => {
         if(err) return res.json({Status: 'Error', Error: 'Error in running query'})
         if(result.length > 0) {
-            bcrypt.compare(req.body.password.toString(), result[0].password, (err, response) => {
-                if (err) return res.json({ Error: "password error" });
-                if (response) {
-                    return res.json({Status: 'Success'})
-                } else {           
-                    return res.json({Error: 'Password not matched'})
-                }
-            })
-            // return res.json({Status: 'Success'})
+            req.session.role = result[0].role;
+            return res.json({Login: true})
         } else {
-            return res.json({Status: 'Error', Error: 'Wrong Email or Password!!'})
+            return res.json({Login: false})
         }
     })
 })

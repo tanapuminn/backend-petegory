@@ -1,26 +1,37 @@
 const userModel = require('../models/userModels')
-const bcrypt = require('bcrypt')
 
-const loginController = () => {
 
-}
-const registerController = async (req, res) => {
+const updateUser = async (req, res, next) => {
     try {
-        const exisitingUser = await userModel.findOne({ email: req.body.email })
-        if (exisitingUser) {
-            return res.status(200).send({ message: 'User Already Exist', success: false })
-        }
-        const password = req.body.password;
-        const salt = await bcrypt.genSalt(10)
-        const hashPassword = await bcrypt.hash(password, salt)
-        req.body.password = hashPassword;
-        const newUser = new userModel(req.body)
-        await newUser.save();
-        res.status(201).send({ message: 'Signup Successfully', success: true })
+        const updateUser = await userModel.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true })
+        res.status(200).json(updateUser)
     } catch (error) {
-        console.log(error)
-        res.status(500).send({ success: false, message: `Register Controller ${error.message}` })
+        next(error)
+    }
+}
+const deleteUser = async (req, res, next) => {
+    try {
+        await userModel.findByIdAndDelete(req.params.id)
+        res.status(200).json('User has been deleted.')
+    } catch (error) {
+        next(error)
+    }
+}
+const getUser = async (req, res, next) => {
+    try {
+        const user = await userModel.findById(req.params.id)
+        res.status(200).json(user)
+    } catch (error) {
+        next(error)
+    }
+}
+const getallUser = async (req, res, next) => {
+    try {
+        const users = await userModel.find()
+        res.status(200).json(users)
+    } catch (error) {
+        next(error)
     }
 }
 
-module.exports = { loginController, registerController };
+module.exports = { updateUser, deleteUser, getUser, getallUser};

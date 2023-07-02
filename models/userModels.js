@@ -1,21 +1,27 @@
 const mongoose = require('mongoose')
 
 const userSchema = new mongoose.Schema({
-    name:{
-        type:String,
-        required: [true,'name is require']
+    name: {
+        type: String,
+        require: true,
+        unique: true
     },
-    email:{
-        type:String,
-        required:  [true,'email is require']
+    email: {
+        type: String,
+        require: true,
+        unique: true
     },
-    phone:{
-        type:Number,
-        required:  [true,'Phone Number is require']
+    phone: {
+        type: Number,
+        require: true
     },
-    password:{
-        type:String,
-        required: [true,'password is require']
+    password: {
+        type: String,
+        require: true
+    },
+    isAdmin: {
+        type: Boolean,
+        default: false
     }
 })
 

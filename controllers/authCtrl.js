@@ -35,7 +35,7 @@ const login = async (req, res, next) => {
 
         const { password, isAdmin, ...otherDetails } = user._doc;
 
-        res.cookie('access_token', token, {httpOnly: true}).status(200).send({ ...otherDetails }).json({isAdmin: user.isAdmin,Status: 'success'  })
+        res.cookie('access_token', token, {httpOnly: true}).status(200).json({ ...otherDetails, isAdmin })
     } catch (error) {
         next(error)
     }

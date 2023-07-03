@@ -24,21 +24,11 @@ app.use(cors(
         credentials: true
     }
 ))
-// app.use(cors())
 app.use(cookieParser())
 app.use(express.json())
 app.use(bodyParser.json())
-// app.use(bodyParser.urlencoded({extended: false}))
-// app.use(express.static('public'))
-// app.use(session({
-//     secret: 'secret',
-//     resave: false,
-//     saveUninitialized: false,
-//     cookie: {
-//         secure: false,
-//         maxAge: 1000 * 60 * 60 * 24
-//     }
-// }))
+app.use(bodyParser.urlencoded({ extended: true }));
+
 
 ////////////////////////////////
 

@@ -42,7 +42,31 @@ const getallHotel = async (req, res, next) => {
     }
 }
 
+const countByType = async (req, res, next) => {
+    try {
+        const standardCount = await hotelModels.countDocuments({ type: 'standard', price: '300' })
+        const deluxeCount = await hotelModels.countDocuments({ type: 'deluxe', price: '450' })
+        res.status(200).json([
+            { type: 'standard', count: standardCount, price: '300' },
+            { type: 'deluxe', count: deluxeCount, price: '450' }
+        ])
+    } catch (error) {
+        next(error)
+    }
+}
+const getDetailHotels = async (req, res) => {
+    try {
+        const hotels = await hotelModels.find({ })
+        res.send({
+            status: 'ok',
+            data: hotels
+        })
+    } catch (error) {
+        console.log(error)
+    }
+}
 
 
 
-module.exports = { createHotel, updateHotel, deleteHotel, getHotel, getallHotel };
+
+module.exports = { createHotel, updateHotel, deleteHotel, getHotel, getallHotel, countByType, getDetailHotels };
